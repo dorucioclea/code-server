@@ -413,6 +413,7 @@ class Builder {
         console.log("[tsc]", original)
       }
       if (line.includes("Watching for file changes")) {
+        // TODO needs to be fixed to restart server every time bundle finishes.
         bundle.then(restartServer)
       }
     })

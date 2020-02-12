@@ -1,27 +1,16 @@
-# code-server &middot; [![MIT license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/cdr/code-server/blob/master/LICENSE) [!["Latest Release"](https://img.shields.io/github/release/cdr/code-server.svg)](https://github.com/cdr/code-server/releases/latest) [![Build Status](https://img.shields.io/travis/com/cdr/code-server/master)](https://github.com/cdr/code-server)
+# code-server
+[![release](https://img.shields.io/github/v/release/cdr/code-server?color=5d75ac&sort=semver)](https://github.com/cdr/code-server/releases)
+[![ci](https://img.shields.io/travis/com/cdr/code-server?label=ci)](https://travis-ci.com/cdr/code-server)
 
-`code-server` is [VS Code](https://github.com/Microsoft/vscode) running on a
-remote server, accessible through the browser.
+`code-server` is [VS Code](https://github.com/Microsoft/vscode) accessible through the browser.
 
 Try it out:
 
 ```bash
-docker run -it -p 127.0.0.1:8080:8080 -v "$PWD:/home/coder/project" codercom/code-server
+docker run -it -p 127.0.0.1:8080:8080 codercom/code-server
 ```
 
-- **Consistent environment:** Code on your Chromebook, tablet, and laptop with a
-  consistent dev environment. Develop more easily for Linux if you have a
-  Windows or Mac and pick up where you left off when switching workstations.
-- **Server-powered:** Take advantage of large cloud servers to speed up tests,
-  compilations, downloads, and more. Preserve battery life when you're on the go
-  since all intensive computation runs on your server.
-
 ![Screenshot](/doc/assets/ide.gif)
-
-## VS Code
-
-- See [our VS Code readme](./src/vscode) for more information about how
-  code-server and VS Code work together.
 
 ## Getting Started
 
@@ -98,7 +87,7 @@ for free.
 Do not expose `code-server` to the open internet without SSL, whether built-in
 or through a proxy.
 
-## Future
+## Roadmap
 
 - **Stay up to date!** Get notified about new releases of `code-server`.
   ![Screenshot](/doc/assets/release.gif)
@@ -109,33 +98,7 @@ or through a proxy.
 Use the `--disable-telemetry` flag to completely disable telemetry. We use the
 data collected to improve code-server.
 
-## Contributing
-
-### Development
-
-- [VS Code prerequisites](https://github.com/Microsoft/vscode/wiki/How-to-Contribute#prerequisites)
-
-```shell
-yarn
-yarn watch # Visit http://localhost:8080 once completed.
-```
-
-If you run into issues about a different version of Node being used, try running
-`npm rebuild` in the VS Code directory.
-
-If changes are made to the patch and you've built previously you must manually
-reset VS Code then run `yarn patch:apply`.
-
-## License
-
-[MIT](LICENSE)
-
 ## Enterprise
 
 Visit [our enterprise page](https://coder.com) for more information about our
 enterprise offering.
-
-## Commercialization
-
-If you would like to commercialize code-server, please contact
-contact@coder.com.

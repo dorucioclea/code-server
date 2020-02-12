@@ -3,18 +3,17 @@
   "license": "MIT",
   "version": "2.1.0",
   "scripts": {
-    "i": "yarn install --ignore-scripts",
-    "preinstall": "./scripts/preinstall.sh",
-    "postinstall": "./scripts/postinstall.sh",
-    "patch:generate": "cd ./lib/vscode && git diff HEAD > ../../scripts/vscode.patch",
-    "patch:apply": "cd ./lib/vscode && git apply ../../scripts/vscode.patch",
+    "vscode": "./scripts/ensure_vscode.sh",
+    "vscode:patch": "cd ./lib/vscode && git diff HEAD > ../../scripts/vscode.patch",
+    "vscode:gen-patch": "cd ./lib/vscode && git apply ../../scripts/vscode.patch",
+
     "test": "mocha -r ts-node/register ./test/*.test.ts",
-    "test:build": "./scripts/test.sh",
     "lint:js": "eslint src test scripts --ext .ts,.tsx",
     "lint:css": "stylelint 'src/**/*.css'",
-    "lint": "./scripts/lint.sh",
-    "watch": "yarn runner watch",
+    "lint": "yarn lint:js && yarn lint:css",
+
     "runner": "cd ./scripts && node --max-old-space-size=32384 -r ts-node/register ./build.ts",
+    "watch": "yarn runner watch",
     "build": "yarn runner build",
     "binary": "yarn runner binary",
     "package": "yarn runner package"
@@ -46,6 +45,8 @@
     "parcel-bundler": "^1.12.4",
     "prettier": "^1.18.2",
     "stylelint": "^13.0.0",
+    "stylelint-config-prettier": "^8.0.1",
+    "stylelint-config-recommended": "^3.0.0",
     "stylelint-config-standard": "^19.0.0",
     "ts-node": "^8.4.1",
     "typescript": "3.7.2"
