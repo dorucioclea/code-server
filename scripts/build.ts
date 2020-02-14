@@ -1,14 +1,10 @@
-import { Binary } from "@coder/nbin"
 import * as cp from "child_process"
 import * as fs from "fs-extra"
-import * as os from "os"
 import Bundler from "parcel-bundler"
 import * as path from "path"
 import * as util from "util"
 
 enum Task {
-  Binary = "binary",
-  Package = "package",
   Build = "build",
   Watch = "watch",
 }
@@ -16,18 +12,11 @@ enum Task {
 class Builder {
   private readonly rootPath = path.resolve(__dirname, "..")
   private readonly vscodeSourcePath = path.join(this.rootPath, "lib/vscode")
-  private readonly binariesPath = path.join(this.rootPath, "binaries")
-  private readonly buildPath = path.join(this.rootPath, "build")
-  private readonly codeServerVersion: string
-  private _target?: "darwin" | "alpine" | "linux"
+  private readonly buildPath = path.join(this.rootPath, "out")
   private currentTask?: Task
 
   public constructor() {
     this.ensureArgument("rootPath", this.rootPath)
-    this.codeServerVersion = this.ensureArgument(
-      "codeServerVersion",
-      process.env.VERSION || require(path.join(this.rootPath, "package.json")).version
-    )
   }
 
   public run(task: Task | undefined): void {
@@ -66,45 +55,14 @@ class Builder {
       throw new Error("No task provided")
     }
 
-    const arch = this.ensureArgument("arch", os.arch().replace(/^x/, "x86_"))
-    const target = this.ensureArgument("target", await this.target())
-    const binaryName = `code-server-${this.codeServerVersion}-${target}-${arch}`
-
     switch (task) {
       case Task.Watch:
         return this.watch()
-      case Task.Binary:
-        return this.binary(binaryName)
-      case Task.Package:
-        return this.package(binaryName)
       case Task.Build:
         return this.build()
       default:
         throw new Error(`No task matching "${task}"`)
     }
-  }
-
-  /**
-   * Get the target of the system.
-   */
-  private async target(): Promise<"darwin" | "alpine" | "linux"> {
-    if (!this._target) {
-      if (os.platform() === "darwin" || (process.env.OSTYPE && /^darwin/.test(process.env.OSTYPE))) {
-        this._target = "darwin"
-      } else {
-        // Alpine's ldd doesn't have a version flag but if you use an invalid flag
-        // (like --version) it outputs the version to stderr and exits with 1.
-        const result = await util
-          .promisify(cp.exec)("ldd --version")
-          .catch((error) => ({ stderr: error.message, stdout: "" }))
-        if (/musl/.test(result.stderr) || /musl/.test(result.stdout)) {
-          this._target = "alpine"
-        } else {
-          this._target = "linux"
-        }
-      }
-    }
-    return this._target
   }
 
   /**
@@ -208,7 +166,7 @@ class Builder {
       await Promise.all([
         fs.move(
           path.join(this.vscodeSourcePath, `out-vscode${process.env.MINIFY ? "-min" : ""}`),
-          path.join(vscodeBuildPath, "out")
+          path.join(vscodeBuildPath, "out"),
         ),
         fs.copy(path.join(this.vscodeSourcePath, ".build/extensions"), path.join(vscodeBuildPath, "extensions")),
       ])
@@ -225,7 +183,7 @@ class Builder {
       return Promise.all(
         ["node_modules", "package.json", "yarn.lock"].map((fileName) => {
           return fs.copy(path.join(sourcePath, fileName), path.join(buildPath, fileName))
-        })
+        }),
       )
     })
 
@@ -240,8 +198,8 @@ class Builder {
             ...merge,
           },
           null,
-          2
-        )
+          2,
+        ),
       )
     })
 
@@ -249,53 +207,6 @@ class Builder {
       await this.task(`restricting ${name} to production dependencies`, async () => {
         return util.promisify(cp.exec)("yarn --production --ignore-scripts", { cwd: buildPath })
       })
-    }
-  }
-
-  /**
-   * Bundles the built code into a binary.
-   */
-  private async binary(binaryName: string): Promise<void> {
-    const bin = new Binary({
-      mainFile: path.join(this.buildPath, "out/node/entry.js"),
-      target: await this.target(),
-    })
-
-    bin.writeFiles(path.join(this.buildPath, "**"))
-
-    await fs.mkdirp(this.binariesPath)
-
-    const binaryPath = path.join(this.binariesPath, binaryName)
-    await fs.writeFile(binaryPath, await bin.build())
-    await fs.chmod(binaryPath, "755")
-
-    this.log(`binary: ${binaryPath}`)
-  }
-
-  /**
-   * Package the binary into a release archive.
-   */
-  private async package(binaryName: string): Promise<void> {
-    const releasePath = path.join(this.rootPath, "release")
-    const archivePath = path.join(releasePath, binaryName)
-
-    await fs.remove(archivePath)
-    await fs.mkdirp(archivePath)
-
-    await fs.copyFile(path.join(this.binariesPath, binaryName), path.join(archivePath, "code-server"))
-    await fs.copyFile(path.join(this.rootPath, "README.md"), path.join(archivePath, "README.md"))
-    await fs.copyFile(path.join(this.vscodeSourcePath, "LICENSE.txt"), path.join(archivePath, "LICENSE.txt"))
-    await fs.copyFile(
-      path.join(this.vscodeSourcePath, "ThirdPartyNotices.txt"),
-      path.join(archivePath, "ThirdPartyNotices.txt")
-    )
-
-    if ((await this.target()) === "darwin") {
-      await util.promisify(cp.exec)(`zip -r "${binaryName}.zip" "${binaryName}"`, { cwd: releasePath })
-      this.log(`archive: ${archivePath}.zip`)
-    } else {
-      await util.promisify(cp.exec)(`tar -czf "${binaryName}.tar.gz" "${binaryName}"`, { cwd: releasePath })
-      this.log(`archive: ${archivePath}.tar.gz`)
     }
   }
 
@@ -419,7 +330,7 @@ class Builder {
     })
   }
 
-  private createBundler(out = "dist", commit?: string): Bundler {
+  private createBundler(commit?: string): Bundler {
     return new Bundler(path.join(this.rootPath, "src/browser/index.tsx"), {
       cache: true,
       cacheDir: path.join(this.rootPath, ".cache"),
@@ -427,7 +338,7 @@ class Builder {
       minify: !!process.env.MINIFY,
       hmr: false,
       logLevel: 1,
-      outDir: path.join(this.rootPath, out),
+      outDir: path.join(this.rootPath, "web-out"),
       publicUrl: `/static-${commit}/dist`,
       target: "browser",
     })

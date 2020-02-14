@@ -19,7 +19,7 @@ RUN chsh -s /bin/bash
 ENV SHELL=/bin/bash
 
 RUN apt-get install -y dumb-init sudo
-RUN apt-get install -y man procps neovim nano htop ssh git
+RUN apt-get install -y man procps vim nano htop ssh git
 
 RUN adduser --gecos '' --disabled-password coder && \
 	echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
