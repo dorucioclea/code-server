@@ -1,9 +1,9 @@
-#!/usr/bin/env sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
 # 1. Ensures VS Code is cloned.
 # 2. Patches it.
-# 3. Installs
+# 3. Installs it.
 main() {
   cd "$(dirname "$0")/.."
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env ts-node
+
 import * as cp from "child_process"
 import * as fs from "fs-extra"
 import Bundler from "parcel-bundler"
@@ -12,16 +14,16 @@ enum Task {
 class Builder {
   private readonly rootPath = path.resolve(__dirname, "..")
   private readonly vscodeSourcePath = path.join(this.rootPath, "lib/vscode")
-  private readonly buildPath = path.join(this.rootPath, "out")
+  private readonly buildPath = path.join(this.rootPath, "build")
   private currentTask?: Task
 
   public constructor() {
     this.ensureArgument("rootPath", this.rootPath)
   }
 
-  public run(task: Task | undefined): void {
-    this.currentTask = task
-    this.doRun(task).catch((error) => {
+  public run(): void {
+    this.currentTask = Task.Build
+    this.build().catch((error) => {
       console.error(error.message)
       process.exit(1)
     })
@@ -50,21 +52,6 @@ class Builder {
     }
   }
 
-  private async doRun(task: Task | undefined): Promise<void> {
-    if (!task) {
-      throw new Error("No task provided")
-    }
-
-    switch (task) {
-      case Task.Watch:
-        return this.watch()
-      case Task.Build:
-        return this.build()
-      default:
-        throw new Error(`No task matching "${task}"`)
-    }
-  }
-
   /**
    * Make sure the argument is set. Display the value if it is.
    */
@@ -80,7 +67,6 @@ class Builder {
    * Build VS Code and code-server.
    */
   private async build(): Promise<void> {
-    process.env.NODE_OPTIONS = "--max-old-space-size=32384 " + (process.env.NODE_OPTIONS || "")
     process.env.NODE_ENV = "production"
 
     await this.task("cleaning up old build", async () => {
@@ -111,20 +97,18 @@ class Builder {
 
   private async buildCodeServer(commit: string): Promise<void> {
     await this.task("building code-server", async () => {
-      return util.promisify(cp.exec)("tsc --outDir ./out-build --tsBuildInfoFile ./.prod.tsbuildinfo", {
+      return util.promisify(cp.exec)("tsc --outDir ./out/server --tsBuildInfoFile ./.prod.tsbuildinfo", {
         cwd: this.rootPath,
       })
     })
 
     await this.task("bundling code-server", async () => {
-      return this.createBundler("dist-build", commit).bundle()
+      return this.createBundler(commit).bundle()
     })
 
     await this.task("copying code-server into build directory", async () => {
       await fs.mkdirp(this.buildPath)
       await Promise.all([
-        fs.copy(path.join(this.rootPath, "out-build"), path.join(this.buildPath, "out")),
-        fs.copy(path.join(this.rootPath, "dist-build"), path.join(this.buildPath, "dist")),
         // For source maps and images.
         fs.copy(path.join(this.rootPath, "src"), path.join(this.buildPath, "src")),
       ])
@@ -137,7 +121,7 @@ class Builder {
   }
 
   private async buildVscode(commit: string): Promise<void> {
-    await this.task("building vs code", () => {
+    await this.task("building VS Code", () => {
       return util.promisify(cp.exec)("yarn gulp compile-build", { cwd: this.vscodeSourcePath })
     })
 
@@ -210,6 +194,7 @@ class Builder {
     }
   }
 
+  // @ts-ignore
   private async watch(): Promise<void> {
     let server: cp.ChildProcess | undefined
     const restartServer = (): void => {
@@ -338,7 +323,7 @@ class Builder {
       minify: !!process.env.MINIFY,
       hmr: false,
       logLevel: 1,
-      outDir: path.join(this.rootPath, "web-out"),
+      outDir: path.join(this.buildPath, "frontend"),
       publicUrl: `/static-${commit}/dist`,
       target: "browser",
     })
@@ -346,4 +331,4 @@ class Builder {
 }
 
 const builder = new Builder()
-builder.run(process.argv[2] as Task)
+builder.run()

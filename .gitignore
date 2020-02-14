@@ -1,4 +1,4 @@
 *.tsbuildinfo
 .cache
+build
 out
-web-out

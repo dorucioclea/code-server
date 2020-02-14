@@ -3,25 +3,20 @@
   "license": "MIT",
   "version": "2.1.0",
   "scripts": {
-    "vscode": "./scripts/ensure_vscode.sh",
-    "vscode:patch": "cd ./lib/vscode && git apply ../../scripts/vscode.patch",
-    "vscode:gen-patch": "cd ./lib/vscode && git diff HEAD > ../../scripts/vscode.patch",
-
+    "vscode": "./ci/vscode.sh",
+    "vscode:patch": "cd ./lib/vscode && git apply ../../ci/vscode.patch",
+    "vscode:gen-patch": "cd ./lib/vscode && git diff HEAD > ../../ci/vscode.patch",
     "test": "mocha -r ts-node/register ./test/*.test.ts",
+
     "lint:js": "eslint src test scripts --ext .ts,.tsx",
     "lint:css": "stylelint 'src/**/*.css'",
     "lint": "yarn lint:js && yarn lint:css",
 
-    "runner": "cd ./scripts && node --max-old-space-size=32384 -r ts-node/register ./build.ts",
-    "watch": "yarn runner watch",
-    "build": "yarn runner build",
-    "binary": "yarn runner binary",
-    "package": "yarn runner package",
-
-    "clean": "./build/clean.sh"
+    "build": "./ci/build.ts",
+    "watch": "./ci/watch.ts",
+    "clean": "./ci/clean.sh"
   },
   "devDependencies": {
-    "@coder/nbin": "^1.2.7",
     "@types/fs-extra": "^8.0.1",
     "@types/hookrouter": "^2.2.1",
     "@types/mocha": "^5.2.7",
