@@ -4,8 +4,8 @@
   "version": "2.1.0",
   "scripts": {
     "vscode": "./scripts/ensure_vscode.sh",
-    "vscode:patch": "cd ./lib/vscode && git diff HEAD > ../../scripts/vscode.patch",
-    "vscode:gen-patch": "cd ./lib/vscode && git apply ../../scripts/vscode.patch",
+    "vscode:patch": "cd ./lib/vscode && git apply ../../scripts/vscode.patch",
+    "vscode:gen-patch": "cd ./lib/vscode && git diff HEAD > ../../scripts/vscode.patch",
 
     "test": "mocha -r ts-node/register ./test/*.test.ts",
     "lint:js": "eslint src test scripts --ext .ts,.tsx",
@@ -16,7 +16,9 @@
     "watch": "yarn runner watch",
     "build": "yarn runner build",
     "binary": "yarn runner binary",
-    "package": "yarn runner package"
+    "package": "yarn runner package",
+
+    "clean": "./build/clean.sh"
   },
   "devDependencies": {
     "@coder/nbin": "^1.2.7",

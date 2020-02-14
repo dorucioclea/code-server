@@ -1,14 +1,4 @@
 *.tsbuildinfo
 .cache
-binaries
-binary-upload
-build
-cache-upload
-dist
-dist-build
-node_modules
 out
-out-build
-release
-source
-yarn-cache
+web-out
